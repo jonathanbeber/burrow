@@ -1,25 +1,25 @@
-# DNS proxy
+# Burrow
 
 ## What is it?
 
-That's a DNS proxy that accepts simple (conventional) DNS requests and proxy it to DNS servers running with [DNS over TLS (DoT)](https://en.wikipedia.org/wiki/DNS_over_TLS).
+Burrow is a proxy that accepts simple (conventional) DNS requests and proxy it to DNS servers running with [DNS over TLS (DoT)](https://en.wikipedia.org/wiki/DNS_over_TLS). Once you start it, a Gopher burrows your plain-text DNS traffic to a cryptographed server.
 
-DoT provides privacy and security improvements taking advantage of encrypted DNS traffic. To allow clients that don't support DoT, basically, this proxy accepts plain text DNS requests and upstream it to servers using TLS.
+DoT provides privacy and security improvements taking advantage of encrypted DNS traffic. To allow clients that don't support DoT, basically, Burrow accepts plain text DNS requests and upstream it to servers using TLS.
 
 ## Getting started
 
 ### Docker (recommended)
 
-**Note**: A Docker image is ready on [DockerHub](https://hub.docker.com/r/jonathanbeber/dns-proxy)
+**Note**: A Docker image is ready on [DockerHub](https://hub.docker.com/r/jonathanbeber/burrow)
 
 Run the following command to build this image:
 ```
-docker build -t jonathanbeber/dns-proxy .
+docker build -t jonathanbeber/burrow .
 ```
 
 Here's an example running its image and mapping the 53 TCP and UDP port on the same ports on the docker host:
 ```
-docker run -itp 53:53 -p 53:53/UDP dns-proxy
+docker run -itp 53:53 -p 53:53/UDP burrow
 ```
 ### Running manually
 
@@ -55,23 +55,23 @@ Configuring the system's DNS resolver to the localhost address (for example, con
 
 ## Implementation
 
-DNS proxy is writen in [Go Lang](https://golang.org/) and relies on the [miekg/dns](https://github.com/miekg/dns) library. [Miekg/dns](https://github.com/miekg/dns) library is used for great projects as [coredns](https://github.com/coredns/coredns), [godns cache](https://github.com/kenshinx/godns) and [mesos-dns](https://mesosphere.github.io/mesos-dns/).
+Burrow is writen in [Go Lang](https://golang.org/) and relies on the [miekg/dns](https://github.com/miekg/dns) library. [Miekg/dns](https://github.com/miekg/dns) library is used for great projects as [coredns](https://github.com/coredns/coredns), [godns cache](https://github.com/kenshinx/godns) and [mesos-dns](https://mesosphere.github.io/mesos-dns/).
 
 ## Configuration
 
-DNS-proxy supports the following environment variable as configuration:
+Burrow supports the following environment variable as configuration:
 
 | Env var name               | Default value | Description |
 |----------------------------|---------------|-------------|
-| DNS_PROXY_UPSTREAM_TIMEOUT | `2000ms`      | Duration period that the DNS proxy waits for an upstream server response before canceling the request |
-| DNS_PROXY_UPSTREAM_SERVER  | `1.1.1.1`     | The upstream server that will receive the encrypted connection |
-| DNS_PROXY_UPSTREAM_PORT    | `853`         | Port that the upstream DoT server is running |
-| DNS_PROXY_ENABLE_TCP       | `true`        | Enable or disable the TCP incoming requests |
-| DNS_PROXY_ENABLE_UDP       | `true`        | Enable or disable the UDP incoming requests |
+| BURROW_UPSTREAM_TIMEOUT | `2000ms`      | Duration period that Burrow waits for an upstream server response before canceling the request |
+| BURROW_UPSTREAM_SERVER  | `1.1.1.1`     | The upstream server that will receive the encrypted connection |
+| BURROW_UPSTREAM_PORT    | `853`         | Port that the upstream DoT server is running |
+| BURROW_ENABLE_TCP       | `true`        | Enable or disable the TCP incoming requests |
+| BURROW_ENABLE_UDP       | `true`        | Enable or disable the UDP incoming requests |
 
 ## Security concerns
 
-DNS proxy enables encrypted connection to upstream DoT servers, but all the traffic until this service, including its responses to clients, still not secure. When using it, you will have to ensure that all the communication between your client and this service is secure. For example, if you host this service in a public address and your DNS client points to it over public internet access, you can be a victim of a [man in the middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack). The usage of this service on a controlled network environment increases the security level.
+Burrow enables encrypted connection to upstream DoT servers, but all the traffic until this service, including its responses to clients, still not secure. When using it, you will have to ensure that all the communication between your client and this service is secure. For example, if you host this service in a public address and your DNS client points to it over public internet access, you can be a victim of a [man in the middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack). The usage of this service on a controlled network environment increases the security level.
 
 ## Usage examples
 
@@ -89,7 +89,7 @@ It's possible to secure all DNS traffic that relies on the system DNS resolver c
  | +-------+   |                   |                  |               |
  | |Browser+---+                   |                  |               |
  | +-------+   |       +---------+ |                  |               |
- | +-------+   |     +>|DNS Proxy+------------------->853/TCP         |
+ | +-------+   |     +>|Burrow   +------------------->853/TCP         |
  | |  DIG  +---+     | +---------+ |                  |               |
  | +-------+   |     |             |                  |               |
  |             |     |             |                  |               |
@@ -101,29 +101,29 @@ It's possible to secure all DNS traffic that relies on the system DNS resolver c
 
 This scenario assumes that your docker images are running in the same docker network.
 
-Start the dns-proxy docker image:
+Start the burrow docker image:
 ```
-docker run -d --rm --name=dns-proxy jonathanbeber/dns-proxy
+docker run -d --rm --name=burrow jonathanbeber/burrow
 ```
 
 Now, start a docker image setting it DNS to be the address from the previous image:
 
 ```
-docker run -it --dns=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' dns-proxy) YOUR_APPLICATION_IMAGE
+docker run -it --dns=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' burrow) YOUR_APPLICATION_IMAGE
 ```
 
-All the DNS traffic from your application's container will be proxied by the DNS-proxy.
+All the DNS traffic from your application's container will be proxied by Burrow.
 
 ### Kubernetes
 
 
-Run the DNS-proxy container as a daemonset (so that it runs on every node) with `hostNetwork: true`. Check the [deployment file](kubernetes/deployment.yaml). Apply it to your cluster with the following command:
+Run the Burrow container as a daemonset (so that it runs on every node) with `hostNetwork: true`. Check the [deployment file](kubernetes/deployment.yaml). Apply it to your cluster with the following command:
 
 ```
 kubectl apply -f kubernetes/deployment.yaml
 ```
 
-That'll open the capability that each Kubernetes Node to uses the localhost address as its own NameServer. Kubernetes uses DNS service that resolves the cluster internal names and just the Pods of this DNS service will talk with DNS proxy daemonset directly. Take a look at the following diagram:
+That'll open the capability that each Kubernetes Node to uses the localhost address as its own NameServer. Kubernetes uses DNS service that resolves the cluster internal names and just the Pods of this DNS service will talk with Burrow daemonset directly. Take a look at the following diagram:
 
 ```
 +---------------------------------------+
@@ -141,8 +141,8 @@ That'll open the capability that each Kubernetes Node to uses the localhost addr
 |           +------+                    |                 |------------------|
 |           |                           |                 |                  |
 |        +--v---+      +------+         |                 |                  |
-|        | K8s  |      | DNS  |         |                 |                  |
-|        | DNS  |      |Proxy +-------------------------->853/TCP port       |
+|        | K8s  |      |BURROW|         |                 |                  |
+|        | DNS  |      |      +-------------------------->853/TCP port       |
 |        | POD  |      | POD  |         |                 |                  |
 |        +---+--+      +--^---+         |                 |                  |
 |            |            |             |                 |                  |
@@ -150,7 +150,7 @@ That'll open the capability that each Kubernetes Node to uses the localhost addr
 +----------+53-TCP&UDP port+------------+
 ```
 
-Note that, changing the `resolv.conf` file of a running Kubernetes Node after its Kubernetes DNS service POD's be already running will not generate any effect. If you use a tool like [launch configuration](https://docs.aws.amazon.com/autoscaling/ec2/userguide/LaunchConfiguration.html) like, change it, and recreate your nodes to apply your changes and make DNS proxy to take control of your DNS traffic. A [kops rolling-update](https://github.com/kubernetes/kops/blob/master/docs/cli/kops_rolling-update.md) like action is the most indicated in this case.
+Note that, changing the `resolv.conf` file of a running Kubernetes Node after its Kubernetes DNS service POD's be already running will not generate any effect. If you use a tool like [launch configuration](https://docs.aws.amazon.com/autoscaling/ec2/userguide/LaunchConfiguration.html) like, change it, and recreate your nodes to apply your changes and make Burrow to take control of your DNS traffic. A [kops rolling-update](https://github.com/kubernetes/kops/blob/master/docs/cli/kops_rolling-update.md) like action is the most indicated in this case.
 
 # Next steps
 

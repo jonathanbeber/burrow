@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: dns-proxy
+  name: burrow
   labels:
-    name: dns-proxy
+    name: burrow
 spec:
   selector:
     matchLabels:
-      name: dns-proxy
+      name: burrow
   template:
     metadata:
       labels:
-        name: dns-proxy
+        name: burrow
     spec:
       hostNetwork: true
       containers:
-      - name: dns-proxy
-        image: jonathanbeber/dns-proxy:0.1.0
+      - name: burrow
+        image: jonathanbeber/burrow:0.1.0
         resources:
           limits:
             cpu: 100m
@@ -25,7 +25,7 @@ spec:
             cpu: 100m
             memory: 300Mi
         env:
-        - name: DNS_PROXY_UPSTREAM_SERVER
+        - name: BURROW_UPSTREAM_SERVER
           value: "1.1.1.1"
         ports:
         - name: tcp-dns

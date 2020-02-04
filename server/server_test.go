@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/jonathanbeber/dns-proxy/config"
+	"github.com/jonathanbeber/burrow/config"
 )
 
 func resetScenario() {

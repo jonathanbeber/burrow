@@ -8,9 +8,9 @@ import (
 	"syscall"
 
 	"github.com/caarlos0/env"
-	"github.com/jonathanbeber/dns-proxy/config"
-	"github.com/jonathanbeber/dns-proxy/handler"
-	"github.com/jonathanbeber/dns-proxy/server"
+	"github.com/jonathanbeber/burrow/config"
+	"github.com/jonathanbeber/burrow/handler"
+	"github.com/jonathanbeber/burrow/server"
 	"github.com/miekg/dns"
 )
 

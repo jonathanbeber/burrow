@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jonathanbeber/dns-proxy/config"
+	"github.com/jonathanbeber/burrow/config"
 	"github.com/miekg/dns"
 )
 
